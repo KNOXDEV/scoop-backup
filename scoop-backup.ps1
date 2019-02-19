@@ -21,74 +21,49 @@ try {
     break
 }
 
-# adds content to the output file, one line at a time
-function add($line) {
-    Add-Content -Path $output -Value $line
-}
-
 # creates initial restoration script content
-New-Item $output -Force | Out-Null
-add "# install Scoop if it isn't already"
-add "iex (new-object net.webclient).downloadstring('https://get.scoop.sh')"
-add ""
-
-$buckets = buckets
-$known = known_buckets
+$cmd = "try{if(Get-Command scoop){}} catch {iex (new-object net.webclient).downloadstring('https://get.scoop.sh')}"
 
 # if we need to install some buckets, we'll need to install git first
+$buckets = buckets
 if(($buckets | Measure-Object).Count -gt 0) {
-    add "# install extra buckets"
-    add "scoop install git"
+    $cmd += ";scoop install git;"
 
     # add each bucket installation on its own line
-    ForEach($bucket in $buckets) {
-        if($known.Contains($bucket)) {
-            add "scoop bucket add $bucket"
+    $cmd += (buckets | ForEach-Object {
+        if((known_buckets).Contains($_)) {
+            $_
+        } else {
+            $repo_url = git config --file "$bucketsdir\$_\.git\config" remote.origin.url
+            "$_ $repo_url"
         }
-        else {
-            $repo_url = git config --file "$bucketsdir\$bucket\.git\config" remote.origin.url
-            add "scoop bucket add $bucket $repo_url"
-        }
-    }
+    } | ForEach-Object { "scoop bucket add $_" }) -Join ";"
 }
 
 # next, we install apps
 $apps = installed_apps
 if(($apps | Measure-Object).Count -gt 0) {
-    add "# install local apps"
 
-    $install_cmd = "scoop install"
+    $cmd += ";scoop install "
 
-    $apps | ForEach-Object {
+    $cmd += ($apps | ForEach-Object {
         $info = install_info $_ (current_version $_ $false) $false
-        if($info.url) {
-            $install_cmd += " $($info.url)"
-        } else {
-            $install_cmd += " $_"
-        }
-    }
-    add $install_cmd
+        if($info.url) { $info.url } else { $_ }
+    }) -Join " "
 }
 
 # finally, we install global apps
 $globals = installed_apps $true
 if(($globals | Measure-Object).Count -gt 0) {
-    add "# install global apps"
-    add "scoop install sudo"
+    $cmd += ';scoop install sudo;sudo powershell -Command "scoop install --global '
 
-    $global_cmd = 'sudo powershell -Command "scoop install --global'
-
-    $globals | ForEach-Object {
+    $cmd += ($globals | ForEach-Object {
         $info = install_info $_ (current_version $_ $true) $true
-        if($info.url) {
-            $global_cmd += " $($info.url)"
-        } else {
-            $global_cmd += " $_"
-        }
-    }
-    $global_cmd += '"'
-    add $global_cmd
+        if($info.url) { $($info.url) } else { $_ }
+    }) -Join " "
+    $cmd += '"'
 }
 
-Write-Output "restoration script saved to:"
-Get-Item $output
+Write-Output "backed up to: $output"
+New-Item $output -Force | Out-Null
+Add-Content -Path $output -Value $cmd
