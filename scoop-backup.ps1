@@ -2,11 +2,11 @@ param($output)
 
 # parameter checks
 if(@('-h', '--help', '/?') -contains $output) {
-    Write-Host "Usage: scoop-backup ./path/to/output.ps1"
+    Write-Host "Usage: scoop-backup ./path/to/output.bat"
     break
 }
 if(@('', $null) -contains $output) {
-    $output = "$psscriptroot\restore.ps1"
+    $output = "$psscriptroot\restore.bat"
 } 
 
 # import core libraries
@@ -64,6 +64,10 @@ if(($globals | Measure-Object).Count -gt 0) {
     $cmd += '"'
 }
 
+$cmd_bytes = [System.Text.Encoding]::Unicode.GetBytes($cmd)
+$cmd_encoded = '@echo off' + [environment]::NewLine `
+                + "powershell.exe -NoProfile -EncodedCommand " + [Convert]::ToBase64String($cmd_bytes)
+
 Write-Output "backed up to: $output"
 New-Item $output -Force | Out-Null
-Add-Content -Path $output -Value $cmd
+Add-Content -Path $output -Value $cmd_encoded

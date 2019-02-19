@@ -5,10 +5,10 @@ Additional functionality for the [Scoop Package Manager](https://scoop.sh).
 Backup your entire current scoop installation with one command:
 
 ```powershell
-scoop-backup ./path/to/output.ps1
+scoop-backup ./path/to/output.bat
 ```
 
-This produces `output.ps1`, which can now be executed on any computer with PowerShell to restore your entire installation, including all buckets and apps.
+This produces the compressed backup `output.bat`, which can now be executed on a vanilla (or not) Windows computer to restore your entire Scoop installation, including all buckets and apps.
 
 scoop-backup can be installed via, you guessed it, scoop, via the [knox-scoop bucket](https://git.irs.sh/KNOXDEV/knox-scoop):
 
