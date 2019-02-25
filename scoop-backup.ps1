@@ -1,13 +1,48 @@
-param($output)
+#requires -Version 3
+# include functions and argument processing
+$global:arguments = $args
+. "$psscriptroot\functions.ps1"
 
-# parameter checks
-if(@('-h', '--help', '/?') -contains $output) {
-    Write-Host "Usage: scoop-backup ./path/to/output.bat"
+$supported_arguments = @(
+    (argument 'prints this help message' '-h' '--help' '/?' '-?'),
+    (argument 'compresses the restoration script as an encoded batch file' '-c' '--compress')
+)
+
+# parse various default path settings
+$compressed = passed($supported_arguments[1])
+$default_filename = "backup-$(Get-Date -f yyMMdd)"
+$default_file = "$default_filename" + $(if($compressed) {".bat"} else {".ps1"})
+$default_destination = "$psscriptroot\backups\$default_file"
+$destination = $default_destination
+
+# check for help arguments
+if(passed($supported_arguments[0])) {
+    Write-Host "Usage: scoop-backup [flags] [destination_folder] `n"
+    Write-Host "Default destination: $default_destination `n"
+
+    $supported_arguments | ForEach-Object {
+        Write-Host "$($_.Aliases)   `t $($_.Description)"
+    }
     break
 }
-if(@('', $null) -contains $output) {
-    $output = "$psscriptroot\restore.bat"
-} 
+
+# filter all paths from our arguments and set our output folder the last path found
+$global:arguments = $arguments | Where {
+    if(Test-Path -Path $_ -PathType container) {
+        $destination = $_
+        return $false
+    }
+    return $true
+}
+
+# complain about unrecognized arguments and abort if found
+if($arguments.Count -ne 0) {
+    complain "unrecognized arguments: $arguments"
+    complain "see: 'scoop-backup --help'"
+    break
+}
+
+
 
 # import core libraries
 try {
@@ -22,52 +57,56 @@ try {
 }
 
 # creates initial restoration script content
-$cmd = "try{if(Get-Command scoop){}} catch {iex (new-object net.webclient).downloadstring('https://get.scoop.sh')}"
+$global:cmd = "try{if(Get-Command scoop){}} catch {iex (new-object net.webclient).downloadstring('https://get.scoop.sh')}`n"
 
 # if we need to install some buckets, we'll need to install git first
 $buckets = buckets
 if(($buckets | Measure-Object).Count -gt 0) {
-    $cmd += ";scoop install git;"
+    append "scoop install git"
 
     # add each bucket installation on its own line
-    $cmd += (buckets | ForEach-Object {
+    buckets | ForEach-Object {
         if((known_buckets).Contains($_)) {
             $_
         } else {
             $repo_url = git config --file "$bucketsdir\$_\.git\config" remote.origin.url
             "$_ $repo_url"
         }
-    } | ForEach-Object { "scoop bucket add $_" }) -Join ";"
+    } | ForEach-Object { append "scoop bucket add $_" }
 }
 
 # next, we install apps
 $apps = installed_apps
 if(($apps | Measure-Object).Count -gt 0) {
 
-    $cmd += ";scoop install "
-
-    $cmd += ($apps | ForEach-Object {
+    append ("scoop install " + ($apps | ForEach-Object {
         $info = install_info $_ (current_version $_ $false) $false
         if($info.url) { $info.url } else { $_ }
-    }) -Join " "
+    }) -Join " ")
 }
 
 # finally, we install global apps
 $globals = installed_apps $true
 if(($globals | Measure-Object).Count -gt 0) {
-    $cmd += ';scoop install sudo;sudo powershell -Command "scoop install --global '
+    append 'scoop install sudo'
 
-    $cmd += ($globals | ForEach-Object {
+    append ('sudo powershell -Command "scoop install --global ' + (($globals | ForEach-Object {
         $info = install_info $_ (current_version $_ $true) $true
         if($info.url) { $($info.url) } else { $_ }
-    }) -Join " "
-    $cmd += '"'
+    }) -Join " ") + '"')
 }
 
-$cmd_bytes = [System.Text.Encoding]::Unicode.GetBytes($cmd)
-$cmd_encoded = '@echo off' + [environment]::NewLine `
-                + "powershell.exe -NoProfile -EncodedCommand " + [Convert]::ToBase64String($cmd_bytes)
+# writing the final output
+New-Item $destination -Force | Out-Null
+if($compressed) {
+    $cmd_bytes = [System.Text.Encoding]::Unicode.GetBytes($cmd)
+    $cmd_encoded = '@echo off' + [environment]::NewLine `
+                + "powershell.exe -NoProfile -EncodedCommand " `
+                + [Convert]::ToBase64String($cmd_bytes) + [environment]::NewLine `
+                + 'pause'
+    Add-Content -Path $destination -Value $cmd_encoded
+} else {
+    Add-Content -Path $destination -Value $cmd
+}
 
-Write-Output "backed up to: $output"
-New-Item $output -Force | Out-Null
-Add-Content -Path $output -Value $cmd_encoded
+Write-Output "backed up to: $destination"
