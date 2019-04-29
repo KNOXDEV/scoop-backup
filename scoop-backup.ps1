@@ -79,10 +79,11 @@ if(($buckets | Measure-Object).Count -gt 0) {
 $apps = installed_apps
 if(($apps | Measure-Object).Count -gt 0) {
 
-    append ("scoop install " + ($apps | ForEach-Object {
+    # installing each app on a new line is, unfortunately, more resilient
+    $apps | ForEach-Object {
         $info = install_info $_ (current_version $_ $false) $false
         if($info.url) { $info.url } else { $_ }
-    }) -Join " ")
+    } | ForEach-Object { append "scoop install $_" }
 }
 
 # finally, we install global apps
@@ -90,10 +91,11 @@ $globals = installed_apps $true
 if(($globals | Measure-Object).Count -gt 0) {
     append 'scoop install sudo'
 
+    # installing each app on a new line is, unfortunately, more resilient
     append ('sudo powershell -Command "scoop install --global ' + (($globals | ForEach-Object {
         $info = install_info $_ (current_version $_ $true) $true
         if($info.url) { $($info.url) } else { $_ }
-    }) -Join " ") + '"')
+    }) -Join ";scoop install --global ") + '"')
 }
 
 # writing the final output
