@@ -29,9 +29,10 @@ if(passed($supported_arguments[0])) {
 # filter all paths from our arguments and set our output folder the last path found
 $global:arguments = $arguments | Where {
     if(Test-Path -Path $_ -PathType container) {
-        $destination = $_
+        $destination = "$_\$default_file"
         return $false
     }
+    complain "the following path does not exist or is not a directory: $_"
     return $true
 }
 
