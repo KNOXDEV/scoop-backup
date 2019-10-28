@@ -26,6 +26,15 @@ function complain($message) {
     Write-Host -ForegroundColor $host.PrivateData.ErrorForegroundColor -BackgroundColor $host.PrivateData.ErrorBackgroundColor $message
 }
 
+# executes the first expression, but falls back to the second if it isn't defined
+function invoke($cmd, $fallback) {
+    if(Get-Command $cmd -errorAction SilentlyContinue) {
+        Invoke-Expression $cmd
+    } else {
+        Invoke-Expression $fallback
+    }
+}
+
 # appends another line to our in-progress script file
 function append($line) {
     $global:cmd += ($line + "`n")

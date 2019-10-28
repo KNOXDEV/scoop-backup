@@ -61,12 +61,12 @@ try {
 $global:cmd = "try{if(Get-Command scoop){}} catch {iex (new-object net.webclient).downloadstring('https://get.scoop.sh')}`n"
 
 # if we need to install some buckets, we'll need to install git first
-$buckets = buckets
+$buckets = invoke "Get-LocalBucket" "buckets"
 if(($buckets | Measure-Object).Count -gt 0) {
     append "scoop install git"
 
     # add each bucket installation on its own line
-    buckets | ForEach-Object {
+    $buckets | ForEach-Object {
         if((known_buckets).Contains($_)) {
             $_
         } else {
