@@ -83,7 +83,7 @@ if(($apps | Measure-Object).Count -gt 0) {
     # installing each app on a new line is, unfortunately, more resilient
     $apps | ForEach-Object {
         $info = install_info $_ (current_version $_ $false) $false
-        if($info.url) { $info.url } else { $_ }
+        if($info.url) { $info.url } else { "$($info.bucket)/$_" }
     } | ForEach-Object { append "scoop install $_" }
 }
 
@@ -95,7 +95,7 @@ if(($globals | Measure-Object).Count -gt 0) {
     # installing each app on a new line is, unfortunately, more resilient
     append ('sudo powershell -Command "scoop install --global ' + (($globals | ForEach-Object {
         $info = install_info $_ (current_version $_ $true) $true
-        if($info.url) { $($info.url) } else { $_ }
+        if($info.url) { $($info.url) } else { "$($info.bucket)/$_" }
     }) -Join ";scoop install --global ") + '"')
 }
 
