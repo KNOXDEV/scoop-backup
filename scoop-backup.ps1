@@ -90,7 +90,7 @@ if(($apps | Measure-Object).Count -gt 0) {
 # finally, we install global apps
 $globals = installed_apps $true
 if(($globals | Measure-Object).Count -gt 0) {
-    append 'scoop install sudo'
+    append 'scoop install main/sudo'
 
     # installing each app on a new line is, unfortunately, more resilient
     append ('sudo powershell -Command "scoop install --global ' + (($globals | ForEach-Object {
