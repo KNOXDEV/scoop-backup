@@ -67,12 +67,8 @@ if(($buckets | Measure-Object).Count -gt 0) {
 
     # add each bucket installation on its own line
     $buckets | ForEach-Object {
-        if((known_buckets).Contains($_)) {
-            $_
-        } else {
-            $repo_url = git config --file "$bucketsdir\$_\.git\config" remote.origin.url
-            "$_ $repo_url"
-        }
+        $repo_url = git config --file "$bucketsdir\$_\.git\config" remote.origin.url
+        "$_ $repo_url"
     } | ForEach-Object { append "scoop bucket add $_" }
 }
 
