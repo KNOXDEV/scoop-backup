@@ -49,6 +49,8 @@ if($arguments.Count -ne 0) {
 try {
     $scooplib = Resolve-Path "$($(Get-Command scoop).Source)\..\..\apps\scoop\current\lib"
     . "$scooplib\core.ps1"
+    . "$scooplib\commands.ps1"
+    . "$scooplib\help.ps1"
     . "$scooplib\manifest.ps1"
     . "$scooplib\buckets.ps1"
     . "$scooplib\versions.ps1"
@@ -83,7 +85,7 @@ if(($apps | Measure-Object).Count -gt 0) {
     } | ForEach-Object { append "scoop install $_" }
 }
 
-# finally, we install global apps
+# next, we install global apps
 $globals = installed_apps $true
 if(($globals | Measure-Object).Count -gt 0) {
     append 'scoop install main/sudo'
@@ -93,6 +95,20 @@ if(($globals | Measure-Object).Count -gt 0) {
         $info = install_info $_ (Select-CurrentVersion -AppName $_ -Global:$true) $true
         if($info.url) { $($info.url) } else { "$($info.bucket)/$_" }
     }) -Join ";scoop install --global ") + '"')
+}
+
+# finally, we install any scoop aliases
+# I've noticed that on old configs from scoop some of this operations will error, hense the try
+try {
+    (get_config 'alias').PSObject.Properties.GetEnumerator() | ForEach-Object {
+        $content = Get-Content (command_path $_.Name)
+        $command = ($content | Select-Object -Skip 1).Trim()
+        $summary = (summary $content).Trim()
+
+        append "scoop alias add '$($_.name)' '$command' '$summary'"
+    }
+} catch {
+    Write-Output "Failed to enumerate aliases, not backed up"
 }
 
 # writing the final output
