@@ -60,7 +60,7 @@ try {
 }
 
 # creates initial restoration script content
-$global:cmd = "try{if(Get-Command scoop){}} catch {iex (new-object net.webclient).downloadstring('https://get.scoop.sh')}`n"
+$global:cmd = "if (Get-Command -Name scoop -ErrorAction SilentlyContinue) {} else {iwr -useb get.scoop.sh | iex}`n"
 
 # if we need to install some buckets, we'll need to install git first
 $buckets = invoke "Get-LocalBucket" "buckets"
