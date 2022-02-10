@@ -91,10 +91,10 @@ if(($globals | Measure-Object).Count -gt 0) {
     append 'scoop install main/sudo'
 
     # installing each app on a new line is, unfortunately, more resilient
-    append ('sudo powershell -Command "scoop install --global ' + (($globals | ForEach-Object {
+    append ("sudo powershell -Command {`nscoop install --global " + (($globals | ForEach-Object {
         $info = install_info $_ (Select-CurrentVersion -AppName $_ -Global:$true) $true
         if($info.url) { $($info.url) } else { "$($info.bucket)/$_" }
-    }) -Join ";scoop install --global ") + '"')
+    }) -Join "`nscoop install --global ") + "`n}")
 }
 
 # finally, we install any scoop aliases
