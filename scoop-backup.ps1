@@ -88,10 +88,10 @@ if(($apps | Measure-Object).Count -gt 0) {
 # next, we install global apps
 $globals = installed_apps $true
 if(($globals | Measure-Object).Count -gt 0) {
-    append 'scoop install main/sudo'
+    append 'scoop install main/gsudo'
 
     # installing each app on a new line is, unfortunately, more resilient
-    append ("sudo powershell -Command {`nscoop install --global " + (($globals | ForEach-Object {
+    append ("gsudo powershell -Command {`nscoop install --global " + (($globals | ForEach-Object {
         $info = install_info $_ (Select-CurrentVersion -AppName $_ -Global:$true) $true
         if($info.url) { $($info.url) } else { "$($info.bucket)/$_" }
     }) -Join "`nscoop install --global ") + "`n}")
