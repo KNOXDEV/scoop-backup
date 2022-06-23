@@ -66,6 +66,7 @@ $global:cmd = "if (Get-Command -Name scoop -ErrorAction SilentlyContinue) {} els
 $buckets = invoke "Get-LocalBucket" "buckets"
 if(($buckets | Measure-Object).Count -gt 0) {
     append "scoop install git"
+    append "scoop update"
 
     # add each bucket installation on its own line
     $buckets | ForEach-Object {
