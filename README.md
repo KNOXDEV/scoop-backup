@@ -10,10 +10,10 @@ scoop-backup
 
 This produces the compressed backup `scoop-backup\backups\backup-YYMMDD.ps1`, which can now be executed on any Windows computer to restore your entire Scoop installation, including all buckets and apps.
 
-scoop-backup can be installed via, you guessed it, scoop, via the [knox-scoop bucket](https://git.irs.sh/KNOXDEV/knox-scoop):
+scoop-backup can be installed via, you guessed it, scoop, via the [knox-scoop bucket](https://github.com/KNOXDEV/knox-scoop):
 
 ```powershell
-scoop bucket add knox-scoop https://git.irs.sh/KNOXDEV/knox-scoop
+scoop bucket add knox-scoop https://github.com/KNOXDEV/knox-scoop
 scoop install scoop-backup
 ```
 
