@@ -47,7 +47,8 @@ if($arguments.Count -ne 0) {
 
 # import core libraries
 try {
-    $scooplib = Resolve-Path "$($(Get-Command scoop).Source)\..\..\apps\scoop\current\lib"
+    if(!$env:SCOOP_HOME) { $env:SCOOP_HOME = Resolve-Path (scoop prefix scoop) }
+    $scooplib = "$env:SCOOP_HOME\lib"
     . "$scooplib\core.ps1"
     . "$scooplib\commands.ps1"
     . "$scooplib\help.ps1"
