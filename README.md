@@ -1,4 +1,9 @@
-# scoop-backup
+# scoop-backup (archived)
+
+> **Warning**: This package was originally created before the addition of `scoop import`
+> and `scoop export` to the main scoop executable. I suggest you use that functionality 
+> instead of this package, although you can still install and use it using the instructions
+> below.
 
 Additional functionality for the [Scoop Package Manager](https://scoop.sh).
 
@@ -35,6 +40,6 @@ scoop-backup --compress
 # >> "output-folder\backup.bat"
 ```
 
-## future plans
+## ~~future plans~~
 
-* Implement a strategy for backing up the persistence directory. For many apps, this is trivial (ccleaner), but others pose a significant challenge (jetbrains-toolbox).
+* ~~Implement a strategy for backing up the persistence directory. For many apps, this is trivial (ccleaner), but others pose a significant challenge (jetbrains-toolbox).~~
